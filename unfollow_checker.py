@@ -163,7 +163,7 @@ def check_not_followed_back(username, password):
     driver = login_instagram(username, password)
 
     if driver:
-        print('Isso pode demorar alguns minutos. Por favor, aguarde até que o processo seja concluído.')
+        print('Isso pode demorar alguns minutos. Por favor, aguarde ate que o processo seja concluido.\n.\n.\n.\n.\n.')
         # Obtém os seguidores
         followers = get_followers(driver, username)
 
@@ -240,6 +240,7 @@ def display_paged_results(results):
 
     next_button = tk.Button(nav_frame, text="Próximo", command=next_page)
     next_button.grid(row=0, column=1, padx=5)
+    print('Concluido!')
 
 # Função para criar a interface gráfica
 def create_gui():
@@ -292,7 +293,7 @@ shutil.copy(chrome_driver_path, os.path.join(destination_directory, "chromedrive
 
 print("ChromeDriver copiado para:", destination_directory)
 
-print('Para o funcionamento do Unfollow Checker, o seu Chrome deve estar na versão mais atual.\nCaso ocorra algum erro, verifique se o Chrome está atualizado.\n')
+print('Para o funcionamento do Unfollow Checker, o seu Chrome deve estar na versao mais atual.\nCaso ocorra algum erro, verifique se o Chrome esta atualizado.\n')
 
 
 # Chama a função para criar a interface gráfica
