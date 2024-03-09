@@ -163,6 +163,7 @@ def check_not_followed_back(username, password):
     driver = login_instagram(username, password)
 
     if driver:
+        print('Isso pode demorar alguns minutos. Por favor, aguarde até que o processo seja concluído.')
         # Obtém os seguidores
         followers = get_followers(driver, username)
 
@@ -282,7 +283,7 @@ def create_gui():
 chrome_driver_path = ChromeDriverManager().install()
 print("ChromeDriver atualizado em:", chrome_driver_path)
 
-destination_directory = "C:/ChromeDriver/"
+destination_directory = "C:\\ChromeDriver\\"
 if not os.path.exists(destination_directory):
     os.makedirs(destination_directory)
 
@@ -290,6 +291,8 @@ if not os.path.exists(destination_directory):
 shutil.copy(chrome_driver_path, os.path.join(destination_directory, "chromedriver.exe"))
 
 print("ChromeDriver copiado para:", destination_directory)
+
+print('Para o funcionamento do Unfollow Checker, o seu Chrome deve estar na versão mais atual.\nCaso ocorra algum erro, verifique se o Chrome está atualizado.\n')
 
 
 # Chama a função para criar a interface gráfica
