@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 import time
+from threading import Thread
 from webdriver_manager.chrome import ChromeDriverManager
 import os
 import shutil
@@ -43,14 +44,25 @@ def login_instagram(username, password):
             # Verifica se o campo de input de username ainda está preenchido, indicando falha no login
             username_input = driver.find_element(By.NAME, "username")
             if username_input.get_attribute("value"):
-                print("Nome de usuário ou senha inválido. Tentando novamente...")
+                print("Nome de usuário ou senha inválido.")
                 driver.quit()
                 break
             else:
                 return driver
         except NoSuchElementException:
-            # Se não encontrar o campo de input de username, assume que o login foi bem-sucedido
+            try:
+            # Verifica se há um campo de verificação de código após o login
+                verification_code_input = driver.find_element(By.NAME, "verificationCode")
+                print("Verificação de duas etapas necessária. Aguardando a inserção do código de verificação...")
+                while verification_code_input.is_displayed():
+                    time.sleep(2)
+                    # Atualiza o elemento para evitar o StaleElementReferenceException
+                    verification_code_input = driver.find_element(By.NAME, "verificationCode")
+                print("Código de verificação inserido. Continuando o login...")
+            except NoSuchElementException:
+                pass
             return driver
+
 # Função para obter os seguidores
 def get_followers(driver, username):
     driver.get("https://www.instagram.com/" + username)
@@ -159,11 +171,14 @@ def get_followings(driver, username):
 
 # Função para verificar quem não te segue de volta
 def check_not_followed_back(username, password):
+    # Exibe a janela de espera
+    wait_window = show_wait_window()
+
     # Realiza o login no Instagram
     driver = login_instagram(username, password)
 
     if driver:
-        print('Isso pode demorar alguns minutos. Por favor, aguarde ate que o processo seja concluido.\n.\n.\n.\n.\n.')
+        print('Isso pode demorar alguns minutos. Por favor, aguarde ate que o processo seja concluido...\n')
         # Obtém os seguidores
         followers = get_followers(driver, username)
 
@@ -185,6 +200,25 @@ def check_not_followed_back(username, password):
             messagebox.showerror("Erro", "Não foi possível obter a lista de seguidores ou de seguidos.")
     else:
         messagebox.showerror("Erro", "Não foi possível fazer login no Instagram.")
+
+    # Destroi a janela de espera
+    destroy_wait_window(wait_window)
+
+# Função para exibir uma janela de espera
+def show_wait_window():
+    wait_window = tk.Toplevel()
+    wait_window.title("Aguarde...")
+    wait_window.attributes('-topmost', True)  # Mantém a janela sempre na frente
+    wait_window.geometry("250x30+{}+{}".format(
+        (wait_window.winfo_screenwidth() - 200) // 2,
+        (wait_window.winfo_screenheight() - 100) // 2))  # Ajuste de tamanho
+    wait_label = tk.Label(wait_window, text="Por favor, aguarde...")
+    wait_label.pack()
+    return wait_window
+
+# Função para destruir a janela de espera
+def destroy_wait_window(wait_window):
+    wait_window.destroy()
 
 # Função para exibir os resultados em páginas
 def display_paged_results(results):
@@ -215,32 +249,51 @@ def display_paged_results(results):
         if current_page < num_pages - 1:
             show_results(current_page + 1)
 
-    # Cria a janela para exibir os resultados
-    result_window = tk.Toplevel()
-    result_window.title("Usuários que não te seguem de volta")
+    try:
+        # Cria a janela para exibir os resultados
+        result_window = tk.Toplevel()
+        result_window.title("Usuários que não te seguem de volta")
+        result_window.attributes('-topmost', True)  # Mantém a janela sempre na frente
 
-    result_text = tk.Text(result_window, height=15, width=40)
-    result_text.pack(padx=10, pady=10)
+        result_text = tk.Text(result_window, height=15, width=40)
+        result_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-    page_label = tk.Label(result_window, text="", pady=5)
-    page_label.pack()
+        page_label = tk.Label(result_window, text="", pady=5)
+        page_label.pack()
 
-    total_label = tk.Label(result_window, text="", pady=5)
-    total_label.pack()
+        total_label = tk.Label(result_window, text="", pady=5)
+        total_label.pack()
 
-    # Mostra a primeira página de resultados
-    show_results(0)
+        # Mostra a primeira página de resultados
+        show_results(0)
 
-    # Adiciona botões para navegar entre as páginas
-    nav_frame = tk.Frame(result_window)
-    nav_frame.pack(pady=5)
+        # Adiciona botões para navegar entre as páginas
+        nav_frame = tk.Frame(result_window)
+        nav_frame.pack(pady=5)
 
-    prev_button = tk.Button(nav_frame, text="Anterior", command=previous_page)
-    prev_button.grid(row=0, column=0, padx=5)
+        prev_button = tk.Button(nav_frame, text="Anterior", command=previous_page)
+        prev_button.grid(row=0, column=0, padx=5)
 
-    next_button = tk.Button(nav_frame, text="Próximo", command=next_page)
-    next_button.grid(row=0, column=1, padx=5)
-    print('Concluido!')
+        next_button = tk.Button(nav_frame, text="Próximo", command=next_page)
+        next_button.grid(row=0, column=1, padx=5)
+
+        print('Concluído!')
+    except Exception as e:
+        messagebox.showerror("Erro", f"Ocorreu um erro ao exibir os resultados: {e}")
+
+# Função para exibir os sobre
+def exibir_sobre():
+    sobre = """
+    Para o funcionamento do software, o Google Chrome
+    deve estar atualizado.
+    
+    Desenvolvido por Leonardo Guilhon
+    
+    """
+    # Cria uma caixa de diálogo para exibir os requisitos
+    messagebox.showinfo("Sobre", sobre)
+    # Chama a função para criar a interface gráfica
+    create_gui()
 
 # Função para criar a interface gráfica
 def create_gui():
@@ -249,7 +302,26 @@ def create_gui():
     root.title("Unfollow Checker")
 
     # Define o tamanho da janela
-    root.geometry("280x100")
+    window_width = 280
+    window_height = 100
+    
+    # Obtém as dimensões da tela
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    
+    # Calcula a posição da janela para centralizá-la na tela
+    x_position = (screen_width - window_width) // 2
+    y_position = (screen_height - window_height) // 2
+    
+    # Define a geometria da janela para centralizá-la
+    root.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+
+
+    # Chama o método lift() para garantir que a janela fique na frente
+    root.lift()
+    
+    # Restaura o foco da janela
+    root.focus_force()
 
     # Função para coletar os dados do usuário e chamar a função de verificação
     def verify_not_followed_back():
@@ -257,7 +329,8 @@ def create_gui():
         password = password_entry.get()
 
         if username and password:
-            check_not_followed_back(username, password)
+            # Executa a verificação em uma thread separada para não bloquear a interface
+            Thread(target=check_not_followed_back, args=(username, password)).start()
         else:
             messagebox.showerror("Erro", "Por favor, preencha o nome de usuário e senha.")
 
@@ -293,8 +366,7 @@ shutil.copy(chrome_driver_path, os.path.join(destination_directory, "chromedrive
 
 print("ChromeDriver copiado para:", destination_directory)
 
-print('Para o funcionamento do Unfollow Checker, o seu Chrome deve estar na versao mais atual.\nCaso ocorra algum erro, verifique se o Chrome esta atualizado.\n')
+print('Para o funcionamento do Unfollow Checker, o seu Chrome deve estar na versao mais atual.\nCaso ocorra algum erro, verifique se o Chrome esta atualizado ou entre em contato com o desenvolvedor.\n')
 
-
-# Chama a função para criar a interface gráfica
-create_gui()
+# Exibe o Sobre
+exibir_sobre()
