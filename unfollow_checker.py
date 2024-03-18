@@ -223,7 +223,7 @@ def destroy_wait_window(wait_window):
 # Função para exibir os resultados em páginas
 def display_paged_results(results):
     num_results = len(results)
-    page_size = 10
+    page_size = 15
     num_pages = (num_results + page_size - 1) // page_size
 
     current_page = 0
